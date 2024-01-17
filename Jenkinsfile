@@ -1,29 +1,25 @@
 pipeline {
-    agent { label 'workers' }
+    agent any
+
     stages {
-        stage('hello') {
-            steps {
-                echo 'Hello World!!!'
-            }
-        }
-        stage('cat') {
-            when {
-                expression {
-                    return env.BRANCH_NAME == 'master' || env.BRANCH_NAME == 'develop' || env.BRANCH_NAME == 'production'
-                }
-            }
+        stage('Run Docker Container') {
             steps {
                 script {
-                    if (env.BRANCH_NAME == 'master') {
-                        echo 'Hello from master!'
-                    } else if (env.BRANCH_NAME == 'develop') {
-                        echo 'Hello from develop!'
-                    } else if (env.BRANCH_NAME == 'production') {
-                        echo 'Hello from production!'
+                    // Pull a Docker image (e.g., 'ubuntu') from Docker Hub
+                    docker.image('ubuntu').pull()
+
+                    // Run a Docker container based on the pulled image
+                    def myContainer = docker.container('my-ubuntu-container').withRun('-d -it ubuntu')
+
+                    // Execute commands inside the Docker container
+                    myContainer.inside {
+                        // Print a message including the branch name
+                        echo "Hello from Docker container on branch: \${env.BRANCH_NAME}"
                     }
+
+                    
                 }
             }
         }
     }
 }
-
