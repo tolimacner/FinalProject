@@ -1,24 +1,33 @@
 pipeline {
     agent any
 
+    environment {
+        DOCKER_HOST = 'tcp://dind:2375'
+    }
+
     stages {
-        stage('Run Docker Container') {
+        stage('Run Ubuntu Container in DinD') {
             steps {
                 script {
-                    // Pull a Docker image (e.g., 'ubuntu') from Docker Hub
-                    docker.image('ubuntu').pull()
+                    // Pull an Ubuntu image from Docker Hub
+                    sh 'docker pull ubuntu'
 
-                    // Run a Docker container based on the pulled image
-                    def myContainer = docker.container('my-ubuntu-container').withRun('-d -it ubuntu')
+                    // Run a Docker container based on the pulled Ubuntu image
+                    sh 'docker run -d --name my-ubuntu-container ubuntu'
 
                     // Execute commands inside the Docker container
-                    myContainer.inside {
-                        // Print a message including the branch name
-                        echo "Hello from Docker container on branch: \${env.BRANCH_NAME}"
-                    }
-
-                    
+                    sh 'docker exec my-ubuntu-container echo "Hello from Docker container!"'
                 }
+            }
+        }
+    }
+
+    post {
+        always {
+            // Clean up: Stop and remove the Docker container
+            script {
+                sh 'docker stop my-ubuntu-container'
+                sh 'docker rm my-ubuntu-container'
             }
         }
     }
